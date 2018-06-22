@@ -2,14 +2,15 @@ const express = require('express');
 const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const methodOverride = require('method-override');
 
 const app = express();
 
 // Map global promise
 mongoose.Promise = global.Promise;
 
-// Connect to mongoose 
-mongoose.connect("mongodb://localhost/vidjot-dev", 
+// Connect to mongoose
+mongoose.connect("mongodb://localhost/vidjot-dev",
     {
         useMongoClient: true
     })
@@ -28,6 +29,9 @@ app.engine('handlebars', exphbs({
 // body-parser middleware
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
+
+// method override middleware
+app.use(methodOverride('_method'));
 
 app.set('view engine', 'handlebars');
 
@@ -75,7 +79,7 @@ app.get('/ideas/edit/:id', (req, res) => {
         res.render('ideas/edit', {
             idea: idea
         });
-    });  
+    });
 });
 
 
@@ -105,6 +109,30 @@ app.post('/ideas', (req, res) => {
             .then(idea => res.redirect('/ideas'))
     }
 });
+
+app.put('/ideas/:id', (req, res) => {
+  Idea.findOne({
+    _id: req.params.id
+  })
+  .then(idea => {
+    idea.title = req.body.title;
+    idea.details = req.body.details;
+    idea.save()
+      .then(idea => {
+        res.redirect('/ideas');
+      })
+  });
+});
+
+// Delete Idea
+app.delete('/ideas/:id', (req, res) => {
+  Idea.remove({
+    _id: req.params.id
+  })
+    .then(() => res.redirect('/ideas'));
+});
+
+
 
 const PORT = 5000;
 
